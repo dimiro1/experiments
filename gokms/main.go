@@ -150,7 +150,7 @@ func main() {
 	}
 }
 
-// Encrypt returns a KMS encrypted byte array
+// encrypt returns a KMS encrypted byte array
 func encrypt(payload []byte, svc *kms.KMS, keyID string) ([]byte, error) {
 	params := &kms.EncryptInput{
 		KeyId:     aws.String(keyID),
@@ -171,7 +171,7 @@ func encrypt(payload []byte, svc *kms.KMS, keyID string) ([]byte, error) {
 	return resp.CiphertextBlob, nil
 }
 
-// Decrypt returns a KMS decrypted byte array
+// decrypt returns a KMS decrypted byte array
 func decrypt(payload []byte, svc *kms.KMS) ([]byte, error) {
 	params := &kms.DecryptInput{
 		CiphertextBlob: payload,
