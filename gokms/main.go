@@ -42,7 +42,7 @@ var (
 	creds     *credentials.Credentials
 	awsConfig *aws.Config
 	svc       *kms.KMS
-	keyID     string
+	keyID     string // The KMS KeyID
 )
 
 func init() {
@@ -60,19 +60,24 @@ func init() {
 // EncryptedString the type that works transparently with KMS
 type EncryptedString string
 
+// This function is called when the data is inserted on the database
 func (e EncryptedString) Value() (driver.Value, error) {
+	// Calling KMS
 	crypted, err := encrypt([]byte(e), svc, keyID)
 
 	if err != nil {
 		return nil, err
 	}
 
+	// The byte array is stored as a base64 string on the database
 	return driver.Value(base64.StdEncoding.EncodeToString(crypted)), nil
 }
 
+// This function will be called when the db.Scan function is called
 func (e *EncryptedString) Scan(src interface{}) error {
 	var source string
 
+	// Only handling string and byte array
 	switch src.(type) {
 	case string:
 		source = src.(string)
@@ -82,12 +87,14 @@ func (e *EncryptedString) Scan(src interface{}) error {
 		return errors.New("Incompatible type for EncryptedString")
 	}
 
+	// Decoding the base64 string
 	decoded, err := base64.StdEncoding.DecodeString(source)
 
 	if err != nil {
 		return err
 	}
 
+	// Calling KMS
 	decrypted, err := decrypt(decoded, svc)
 
 	if err != nil {
@@ -100,6 +107,7 @@ func (e *EncryptedString) Scan(src interface{}) error {
 }
 
 func main() {
+	// Getting the sqlite database
 	db, err := sql.Open("sqlite3", "file:foo.db")
 
 	if err != nil {
@@ -107,9 +115,10 @@ func main() {
 	}
 	defer db.Close()
 
+	// Creating a users table
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS users (
 						id INTEGER PRIMARY KEY AUTOINCREMENT,
-						email VARCHAR(50)
+						email TEXT
 					  )`)
 
 	if err != nil {
@@ -122,12 +131,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	_, err = db.Exec("INSERT INTO users (email) VALUES(?)", EncryptedString("user@example.com"))
+	// Inserting two users on the database
+	_, err = db.Exec("INSERT INTO users (email) VALUES (?), (?)",
+		EncryptedString("user@example.com"), EncryptedString("user2@example.com"))
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// Querying users table
 	rows, err := db.Query("SELECT * FROM users")
 
 	if err != nil {
@@ -138,6 +150,8 @@ func main() {
 
 	for rows.Next() {
 		var id int64
+
+		// Using EncryptedString the decryption will be transparent
 		var email EncryptedString
 
 		err = rows.Scan(&id, &email)
@@ -151,6 +165,7 @@ func main() {
 }
 
 // encrypt returns a KMS encrypted byte array
+// See http://docs.aws.amazon.com/sdk-for-go/api/service/kms/KMS.html#Encrypt-instance_method
 func encrypt(payload []byte, svc *kms.KMS, keyID string) ([]byte, error) {
 	params := &kms.EncryptInput{
 		KeyId:     aws.String(keyID),
@@ -162,6 +177,7 @@ func encrypt(payload []byte, svc *kms.KMS, keyID string) ([]byte, error) {
 			aws.String("GrantTokenType"),
 		},
 	}
+
 	resp, err := svc.Encrypt(params)
 
 	if err != nil {
@@ -172,6 +188,7 @@ func encrypt(payload []byte, svc *kms.KMS, keyID string) ([]byte, error) {
 }
 
 // decrypt returns a KMS decrypted byte array
+// See http://docs.aws.amazon.com/sdk-for-go/api/service/kms/KMS.html#Decrypt-instance_method
 func decrypt(payload []byte, svc *kms.KMS) ([]byte, error) {
 	params := &kms.DecryptInput{
 		CiphertextBlob: payload,
@@ -182,6 +199,7 @@ func decrypt(payload []byte, svc *kms.KMS) ([]byte, error) {
 			aws.String("GrantTokenType"),
 		},
 	}
+
 	resp, err := svc.Decrypt(params)
 
 	if err != nil {
