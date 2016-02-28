@@ -1,7 +1,7 @@
 package main
 
 import (
-	"io/ioutil"
+	"errors"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -10,14 +10,44 @@ import (
 	"github.com/olebedev/go-duktape"
 )
 
-func readFile(file string) string {
-	js, err := ioutil.ReadFile(file)
+func loadJSFile(ctx *duktape.Context, file string) error {
+	ctx.EvalFile(file)
+	result := ctx.GetString(-1)
 
-	if err != nil {
-		log.Fatal(err)
+	if result != "" {
+		return errors.New(result)
 	}
 
-	return string(js)
+	ctx.Pop()
+
+	return nil
+}
+
+func loadJSFiles(ctx *duktape.Context, files ...string) error {
+	for _, file := range files {
+		err := loadJSFile(ctx, file)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func renderServer(ctx *duktape.Context, name string) (string, error) {
+	ctx.GetGlobalString("renderServer")
+
+	if ctx.IsUndefined(-1) {
+		return "", errors.New("Could not find function 'renderServer'")
+	}
+
+	ctx.PushString(name)
+	ctx.Call(1)
+	result := ctx.GetString(-1)
+	ctx.Pop()
+
+	return result, nil
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -29,19 +59,23 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 	ctx := duktape.New()
 
-	// Loading Javascript
-	ctx.EvalString(readFile("static/duktape-polyfill.js"))
-	ctx.EvalString(readFile("static/react.js"))
-	ctx.EvalString(readFile("static/react-dom-server.js"))
-	ctx.EvalString(readFile("static/components.js"))
-	ctx.EvalString(readFile("static/server.js"))
+	err = loadJSFiles(ctx,
+		"static/duktape-polyfill.js",
+		"static/react.js",
+		"static/react-dom-server.js",
+		"static/components.js",
+		"static/server.js",
+	)
 
-	// Calling function renderServer
-	ctx.GetGlobalString("renderServer")
-	ctx.PushString("Claudemiro")
-	ctx.Call(1)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	component := ctx.GetString(-1)
+	component, err := renderServer(ctx, "Claudemiro")
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	t.Execute(w, component)
 }
