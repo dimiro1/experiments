@@ -46,7 +46,7 @@ const (
 // Health is a health status struct
 type Health struct {
 	Status string      `json:"status"`
-	Detail interface{} `json:"detail"`
+	Info   interface{} `json:"info"`
 }
 
 // NewHealth return a new Health with status Down
@@ -130,7 +130,7 @@ func (ha HealthAggregator) Health() Health {
 		healths[name] = h
 	}
 
-	health.Detail = healths
+	health.Info = healths
 	return health
 }
 
@@ -185,7 +185,7 @@ func (i CompositeHealthIndicator) Health() (Health, error) {
 		healths[name] = h
 	}
 
-	health.Detail = healths
+	health.Info = healths
 
 	return health, err
 }
@@ -215,7 +215,7 @@ func (g URLHealthIndicator) Health() (Health, error) {
 
 	if err != nil {
 		health.Down()
-		health.Detail = URLHealthIndicatorResponse{Status: http.StatusBadRequest}
+		health.Info = URLHealthIndicatorResponse{Status: http.StatusBadRequest}
 
 		return health, err
 	}
@@ -228,7 +228,7 @@ func (g URLHealthIndicator) Health() (Health, error) {
 
 	if err != nil {
 		health.Down()
-		health.Detail = URLHealthIndicatorResponse{Status: http.StatusBadRequest}
+		health.Info = URLHealthIndicatorResponse{Status: http.StatusBadRequest}
 
 		return health, err
 	}
@@ -237,7 +237,7 @@ func (g URLHealthIndicator) Health() (Health, error) {
 		health.Down()
 	}
 
-	health.Detail = URLHealthIndicatorResponse{
+	health.Info = URLHealthIndicatorResponse{
 		Status: resp.StatusCode,
 	}
 
