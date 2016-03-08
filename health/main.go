@@ -46,7 +46,7 @@ const (
 // Health is a health status struct
 type Health struct {
 	Status string      `json:"status"`
-	Info   interface{} `json:"info"`
+	Info   interface{} `json:"info,omitempty"`
 }
 
 // NewHealth return a new Health with status Down
