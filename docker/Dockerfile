@@ -1,0 +1,10 @@
+FROM golang:1.6.1-alpine
+
+ENV APPDIR $GOPATH/src/github.com/experiments/docker
+
+ADD . $APPDIR
+WORKDIR $APPDIR
+
+EXPOSE 8080
+
+ENTRYPOINT go run main.go
