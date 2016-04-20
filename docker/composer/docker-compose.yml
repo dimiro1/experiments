@@ -1,9 +1,7 @@
 version: '2'
 services:
   web:
-    image: golang:1.6.1-alpine
-    entrypoint: go run main.go
-    working_dir: /go/src/github.com/experiments/docker/composer
+    build: .
     ports:
       - "8080:8080"
     volumes:

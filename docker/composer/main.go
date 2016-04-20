@@ -1,14 +1,16 @@
 package main
 
 import (
-	"io"
+	"encoding/json"
 	"log"
 	"net/http"
+	"path/filepath"
 )
 
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		io.WriteString(w, "Hello Docker")
+		files, _ := filepath.Glob("*")
+		json.NewEncoder(w).Encode(files)
 	})
 
 	log.Println("Starting on port 8080")
