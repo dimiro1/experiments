@@ -1,0 +1,9 @@
+<project>
+    <target name="compile">
+        <javac srcdir="." destdir="." includeantruntime="false" />
+    </target>
+    
+    <target name="run" depends="compile">
+        <java classname="Main" />
+    </target>
+</project>
