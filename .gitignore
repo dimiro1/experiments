@@ -24,3 +24,7 @@ _testmain.go
 *.prof
 
 *.db
+
+*/build/*
+.gradle
+*.class
