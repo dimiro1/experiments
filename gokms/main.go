@@ -60,7 +60,7 @@ func init() {
 // EncryptedString the type that works transparently with KMS
 type EncryptedString string
 
-// This function is called when the data is inserted on the database
+// Value function is called when the data is inserted on the database
 func (e EncryptedString) Value() (driver.Value, error) {
 	// Calling KMS
 	crypted, err := encrypt([]byte(e), svc, keyID)
@@ -73,7 +73,7 @@ func (e EncryptedString) Value() (driver.Value, error) {
 	return driver.Value(base64.StdEncoding.EncodeToString(crypted)), nil
 }
 
-// This function will be called when the db.Scan function is called
+// Scan function will be called when the db.Scan function is called
 func (e *EncryptedString) Scan(src interface{}) error {
 	var source string
 
