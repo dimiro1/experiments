@@ -170,12 +170,12 @@ func encrypt(payload []byte, svc *kms.KMS, keyID string) ([]byte, error) {
 	params := &kms.EncryptInput{
 		KeyId:     aws.String(keyID),
 		Plaintext: payload,
-		EncryptionContext: map[string]*string{
-			"Key": aws.String("EncryptionContextValue"),
-		},
-		GrantTokens: []*string{
-			aws.String("GrantTokenType"),
-		},
+		EncryptionContext: aws.StringMap(map[string]string{
+			"Key": "EncryptionContextValue",
+		}),
+		GrantTokens: aws.StringSlice([]string{
+			"GrantTokenType",
+		}),
 	}
 
 	resp, err := svc.Encrypt(params)
@@ -192,12 +192,12 @@ func encrypt(payload []byte, svc *kms.KMS, keyID string) ([]byte, error) {
 func decrypt(payload []byte, svc *kms.KMS) ([]byte, error) {
 	params := &kms.DecryptInput{
 		CiphertextBlob: payload,
-		EncryptionContext: map[string]*string{
-			"Key": aws.String("EncryptionContextValue"),
-		},
-		GrantTokens: []*string{
-			aws.String("GrantTokenType"),
-		},
+		EncryptionContext: aws.StringMap(map[string]string{
+			"Key": "EncryptionContextValue",
+		}),
+		GrantTokens: aws.StringSlice([]string{
+			"GrantTokenType",
+		}),
 	}
 
 	resp, err := svc.Decrypt(params)
