@@ -1,5 +1,6 @@
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -20,7 +21,7 @@ public class Main {
     ServletHandler handler = new ServletHandler();
     server.setHandler(handler);
 
-    handler.addServletWithMapping(HelloServlet.class, "/*");
+    handler.addServletWithMapping(new ServletHolder(new HelloServlet()), "/*");
 
     server.start();
     server.join();
