@@ -21,7 +21,6 @@ func contexter() macaron.Handler {
 func main() {
 	m := macaron.Classic()
 	m.Use(macaron.Renderer())
-	m.Use(macaron.Logger())
 	m.Use(contexter())
 
 	m.Get("/", func(ctx *context) string {
