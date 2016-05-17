@@ -1,0 +1,22 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    hanami-router (0.6.2)
+      hanami-utils (~> 0.7)
+      http_router (~> 0.11)
+    hanami-utils (0.7.1)
+    http_router (0.11.2)
+      rack (>= 1.0.0)
+      url_mount (~> 0.2.1)
+    rack (1.6.4)
+    url_mount (0.2.1)
+      rack
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  hanami-router
+
+BUNDLED WITH
+   1.12.4
