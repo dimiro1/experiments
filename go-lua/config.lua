@@ -12,3 +12,13 @@ helpers.registerService("/service/", service)
 print(offer)
 print(offer.id)
 print(offer["id"])
+
+function hello(name)
+    if name == "Claudemiro" then
+        print("Welcome admin!")
+        return true
+    else
+        print("Hello " .. name .. "!")
+        return false
+    end
+end
