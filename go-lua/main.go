@@ -19,8 +19,10 @@ func main() {
 	l.NewTable()
 	l.PushString("id")
 	l.PushString("6bd07872-2730-4140-b5d3-250fb7f59d60")
+	stackDump(l)
 	l.SetTable(-3)
 	l.SetGlobal("offer")
+	stackDump(l)
 
 	if err := lua.DoFile(l, "config.lua"); err != nil {
 		panic(err)
@@ -36,8 +38,8 @@ func main() {
 	}
 
 	fmt.Println(l.ToBoolean(-1))
-	l.Pop(-1)
-
+	l.Pop(1)
+	stackDump(l)
 }
 
 func stackDump(l *lua.State) {
