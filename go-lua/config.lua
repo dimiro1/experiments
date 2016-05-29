@@ -8,3 +8,7 @@ service = {
 }
 
 helpers.registerService("/service/", service)
+
+print(offer)
+print(offer.id)
+print(offer["id"])
