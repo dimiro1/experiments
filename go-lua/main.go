@@ -37,7 +37,7 @@ func main() {
 		fmt.Println(err, reflect.TypeOf(err))
 	}
 
-	fmt.Println(l.ToBoolean(-1))
+	fmt.Println(l.ToBoolean(1))
 	l.Pop(1)
 	stackDump(l)
 }
