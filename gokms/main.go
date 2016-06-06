@@ -33,22 +33,17 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/kms"
 )
 
 var (
-	creds     *credentials.Credentials
-	awsConfig *aws.Config
-	svc       *kms.KMS
-	keyID     string // The KMS KeyID
+	svc   *kms.KMS
+	keyID string // The KMS KeyID
 )
 
 func init() {
-	creds = credentials.NewEnvCredentials()
-	awsConfig = aws.NewConfig().WithRegion("us-east-1").WithCredentials(creds)
-	svc = kms.New(session.New(), awsConfig)
+	svc = kms.New(session.New(), aws.NewConfig().WithRegion("us-east-1"))
 
 	keyID = os.Getenv("AWS_KMS_KEY_ID")
 
