@@ -50,8 +50,8 @@ func (c *cryptoString) Scan(src interface{}) error {
 }
 
 type person struct {
-	ID   uint64 `db:"id"`
-	Name string `db:"name"`
+	ID   uint64       `db:"id"`
+	Name cryptoString `db:"name"`
 }
 
 var (
@@ -97,7 +97,7 @@ func addPerson(db *sqlx.DB, p person) error {
 		return err
 	}
 
-	tokens := strings.Split(p.Name, " ")
+	tokens := strings.Split(string(p.Name), " ")
 
 	for _, token := range tokens {
 		token = strings.TrimSpace(strings.ToLower(token))
@@ -154,25 +154,10 @@ func search(db *sqlx.DB, query string) ([]person, error) {
 		return people, err
 	}
 
-	rows, err := db.Queryx(q, args...)
+	err = db.Select(&people, q, args...)
 
 	if err != nil {
 		return people, err
-	}
-
-	defer rows.Close()
-
-	for rows.Next() {
-		var id uint64
-		var name cryptoString
-
-		err := rows.Scan(&id, &name)
-
-		if err != nil {
-			return people, err
-		}
-
-		people = append(people, person{id, string(name)})
 	}
 
 	return people, err
