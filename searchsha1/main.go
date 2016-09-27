@@ -100,7 +100,8 @@ func addPerson(db *sqlx.DB, p person) error {
 	tokens := strings.Split(p.Name, " ")
 
 	for _, token := range tokens {
-		crypted := fmt.Sprintf("%x", sha256.Sum256([]byte(strings.TrimSpace(token))))
+		token = strings.TrimSpace(strings.ToLower(token))
+		crypted := fmt.Sprintf("%x", sha256.Sum256([]byte(token)))
 		row := db.QueryRow("SELECT h.id FROM hashes h WHERE h.hash = ?", crypted)
 
 		if err != nil {
@@ -138,7 +139,8 @@ func search(db *sqlx.DB, query string) ([]person, error) {
 	cryptoTokens := []string{}
 
 	for _, token := range tokens {
-		crypted := fmt.Sprintf("%x", sha256.Sum256([]byte(strings.TrimSpace(token))))
+		token = strings.TrimSpace(strings.ToLower(token))
+		crypted := fmt.Sprintf("%x", sha256.Sum256([]byte(token)))
 		cryptoTokens = append(cryptoTokens, crypted)
 	}
 
