@@ -1,5 +1,9 @@
 // Example of best practices
+// See: https://github.com/danielgtaylor/aglio
+// See: https://github.com/apiaryio/dredd
 // See: https://elithrar.github.io/article/http-handler-error-handling-revisited/
+// See: https://text.sourcegraph.com/google-i-o-talk-building-sourcegraph-a-large-scale-code-search-cross-reference-engine-in-go-1f911b78a82e#.287nox7sm
+// See: http://www.gorillatoolkit.org/pkg/
 package main
 
 import (
@@ -158,7 +162,12 @@ func ProductsHandler(env *Env, w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	return json.NewEncoder(w).Encode(products)
+	w.Header().Set("content-type", "application/json; charset=utf-8")
+	if err := json.NewEncoder(w).Encode(products); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // SearchHandler handle http requests on /search
@@ -179,7 +188,12 @@ func SearchHandler(env *Env, w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	return json.NewEncoder(w).Encode(products)
+	w.Header().Set("content-type", "application/json; charset=utf-8")
+	if err := json.NewEncoder(w).Encode(products); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func main() {
@@ -189,8 +203,8 @@ func main() {
                         id INTEGER PRIMARY KEY, 
                         name TEXT
                 );
-                INSERT INTO Products VALUES (1, 'In Page 1');
-                INSERT INTO Products VALUES (2, 'In Page 2');`)
+                INSERT INTO Products VALUES (1, 'TV');
+                INSERT INTO Products VALUES (2, 'Microwave');`)
 
 	inventory := &DatabaseInventoryRepository{db}
 
@@ -203,6 +217,7 @@ func main() {
 
 	r.Handle("/products", handlers.LoggingHandler(os.Stdout, Handler{env, ProductsHandler}))
 	r.Handle("/products/search", handlers.LoggingHandler(os.Stdout, Handler{env, SearchHandler}))
+	r.Handle("/docs/", http.StripPrefix("/docs/", http.FileServer(http.Dir("docs"))))
 
 	http.ListenAndServe(":8080", r)
 }
