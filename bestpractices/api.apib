@@ -1,0 +1,45 @@
+FORMAT: 1A
+HOST: http://localhost:8080/
+
+# Example API
+
+This is an example Blueprint API
+
+## Products [/products{?page}]
+
+### List All Products [GET]
+
+List all products
+
++ Parameters
+    + page (number, optional) - The page number
+        + Default: 1
+
++ Response 200 (application/json)
+
+        [
+            {
+                "id": 1,
+                "name": "TV"
+            }
+        ]
+
+## Search Products [/products/search{?page,q}]
+
+### Search a Product [GET]
+
+Search Products
+
++ Parameters
+    + page (number, optional) - The page number
+        + Default: 1
+    + q: Search term (string) - The search term
+
++ Response 200 (application/json)
+
+        [
+            {
+                "id": 1,
+                "name": "TV"
+            }
+        ]
