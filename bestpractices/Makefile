@@ -4,4 +4,4 @@ testapi:
 genapidoc:
 	rm -rf docs
 	mkdir docs
-	aglio -i api.apib -o docs/index.html
+	aglio -i api.apib -o docs/index.html -t flatly
