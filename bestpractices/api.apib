@@ -17,12 +17,36 @@ List all products
 
 + Response 200 (application/json; charset=utf-8)
 
-        [
+    + Body
+
+            [
+                {
+                    "id": 1,
+                    "name": "TV"
+                }
+            ]
+
+    + Schema
+
             {
-                "id": 1,
-                "name": "TV"
+                "$schema": "http://json-schema.org/draft-04/schema#",
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "integer"
+                        },
+                        "name": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "id",
+                        "name"
+                    ]
+                }
             }
-        ]
 
 ## Search Products [/products/search{?page,q}]
 
@@ -37,9 +61,33 @@ Search Products
 
 + Response 200 (application/json; charset=utf-8)
 
-        [
+        + Body
+
+            [
+                {
+                    "id": 1,
+                    "name": "TV"
+                }
+            ]
+
+    + Schema
+
             {
-                "id": 1,
-                "name": "TV"
+                "$schema": "http://json-schema.org/draft-04/schema#",
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "integer"
+                        },
+                        "name": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "id",
+                        "name"
+                    ]
+                }
             }
-        ]
