@@ -162,10 +162,14 @@ func ProductsHandler(env *Env, w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	w.Header().Set("content-type", "application/json; charset=utf-8")
-	if err := json.NewEncoder(w).Encode(products); err != nil {
+	js, err := json.Marshal(products)
+
+	if err != nil {
 		return err
 	}
+
+	w.Header().Set("content-type", "application/json; charset=utf-8")
+	w.Write(js)
 
 	return nil
 }
@@ -188,10 +192,14 @@ func SearchHandler(env *Env, w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	w.Header().Set("content-type", "application/json; charset=utf-8")
-	if err := json.NewEncoder(w).Encode(products); err != nil {
+	js, err := json.Marshal(products)
+
+	if err != nil {
 		return err
 	}
+
+	w.Header().Set("content-type", "application/json; charset=utf-8")
+	w.Write(js)
 
 	return nil
 }
