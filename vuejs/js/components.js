@@ -1,9 +1,9 @@
 Vue.component('item', {
     props: ['text'],
-    template: '<li>{{ text }}</li>'
+    template: '#item-template'
 });
 
 Vue.component('app', {
     props: ['message'],
-    template: '#app-template',
+    template: '#app-template'
 })
