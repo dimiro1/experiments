@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Golang + Vuejs</title>
+    </head>
+
+    <body>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.0.6/vue.min.js"></script>
+        <script type="x-template" id="app-template">[[ template "app-template.html" ]]</script>
+
+        <div id="app">
+            <app v-bind:message="message"></app>
+        </div>
+
+        <script src="/js/components.js"></script>
+
+        <script>
+            var vm = new Vue({
+                el: "#app",
+                data: {
+                    message: '[[ .Get "q" ]]'
+                }
+            });
+        </script>
+    </body>
+</html>
