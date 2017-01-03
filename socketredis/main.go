@@ -1,14 +1,20 @@
 package main
 
 import (
-	"net"
 	"bufio"
+	"bytes"
+	"errors"
 	"fmt"
 	"io"
-	"bytes"
+	"net"
 	"strconv"
-	"regexp"
-	"errors"
+	"time"
+)
+
+var (
+	InvalidConnectionErr = errors.New("Invalid connection")
+	WriteErr             = errors.New("Could not write INFO command")
+	ReadErr              = errors.New("Could not read Redis response")
 )
 
 func main() {
@@ -30,34 +36,38 @@ func main() {
 // This is only ready to exec the INFO command on Redis
 func info(conn net.Conn) (string, error) {
 	if conn == nil {
-		return "", errors.New("Invalid connection")
+		return "", InvalidConnectionErr
 	}
 
+	conn.SetWriteDeadline(time.Now().Add(1 * time.Second))
 	_, err := conn.Write([]byte("INFO\n"))
 
 	if err != nil {
-		return "", errors.New("Could not exec command")
+		return "", WriteErr
 	}
 
 	reader := bufio.NewReader(conn)
 
-	message, err := reader.ReadString('\n')
+	line, err := reader.ReadString('\n')
 
 	if err != nil {
-		return "", errors.New("Could not read command output")
+		return "", ReadErr
 	}
 
-	re := regexp.MustCompile("\\d+")
-	matches := re.FindAllString(message, -1)
-
-	if len(matches) != 1 {
-		return "", errors.New("Malformed output")
+	// Empty line?
+	if len(line) == 0 {
+		return "", ReadErr
 	}
 
-	count, err := strconv.ParseInt(matches[0], 10, 64)
+	// Info command
+	if line[0] != '$' {
+		return "", ReadErr
+	}
+
+	count, err := strconv.ParseInt(line[1:len(line)-2], 10, 64)
 
 	if err != nil {
-		return "", errors.New("Malformed output")
+		return "", ReadErr
 	}
 
 	var buf bytes.Buffer
