@@ -21,6 +21,10 @@ func (f ClientFunc) Do(r *http.Request) (*http.Response, error) {
 
 type Decorator func(Client) Client
 
+func UserAgent(value string) Decorator {
+	return Header("User-Agent", value)
+}
+
 func Header(name, value string) Decorator {
 	return func(c Client) Client {
 		return ClientFunc(func(r *http.Request) (*http.Response, error) {
@@ -55,8 +59,8 @@ func FaultTolerance(attempts int, backoff time.Duration) Decorator {
 
 func Decorate(c Client, ds ...Decorator) Client {
 	decorated := c
-	for _, decorate := range ds {
-		decorated = decorate(decorated)
+	for i := len(ds) - 1; i >= 0; i-- {
+		decorated = ds[i](decorated)
 	}
 	return decorated
 }
@@ -64,9 +68,9 @@ func Decorate(c Client, ds ...Decorator) Client {
 func main() {
 	c := Decorate(
 		http.DefaultClient,
-		Logging(log.New(os.Stdout, "", log.LstdFlags)),
+		UserAgent("Golang/1.1"),
 		FaultTolerance(5, time.Second),
-		Header("User-Agent", "Golang/1.1"),
+		Logging(log.New(os.Stdout, "", log.LstdFlags)),
 	)
 	r, _ := http.NewRequest("GET", "https://httpbin.org/status/200", nil)
 	c.Do(r)
