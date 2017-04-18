@@ -1,0 +1,151 @@
+{
+  "swagger": "2.0",
+  "paths": {
+    "/todos": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "todos"
+        ],
+        "summary": "List todos filtered by some parameters.",
+        "operationId": "getTodos",
+        "parameters": [
+          {
+            "minimum": 0,
+            "type": "integer",
+            "format": "uint64",
+            "x-go-name": "Page",
+            "description": "Page number for pagination",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "x-go-name": "Done",
+            "description": "Filter todos",
+            "name": "done",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getTodosResponse"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      },
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "todos"
+        ],
+        "summary": "Create a new todo item.",
+        "operationId": "createTodo",
+        "parameters": [
+          {
+            "x-go-name": "Todo",
+            "name": "todo",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/todo"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/emptyResponse"
+          },
+          "422": {
+            "$ref": "#/responses/unprocessableEntityResponse"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "todo": {
+      "type": "object",
+      "properties": {
+        "done": {
+          "type": "boolean",
+          "x-go-name": "Done"
+        },
+        "id": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "ID"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        }
+      },
+      "x-go-package": "github.com/dimiro1/experiments/swagger"
+    }
+  },
+  "responses": {
+    "emptyResponse": {},
+    "genericError": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "x-go-name": "Message"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "Status"
+          }
+        }
+      }
+    },
+    "getTodosResponse": {
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/todo"
+        }
+      }
+    },
+    "unprocessableEntityResponse": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "description": "Errors for each field",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "x-go-name": "Errors"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "Status"
+          }
+        }
+      }
+    }
+  }
+}
