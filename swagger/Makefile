@@ -1,4 +1,4 @@
-.PHONY: swagger
+.PHONY: swagger run
 
 all: swagger
 

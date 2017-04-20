@@ -1,68 +1,66 @@
 package main
 
 import (
+	"errors"
+	"net/http"
+
 	"github.com/labstack/echo"
-	"github.com/labstack/echo/engine/standard"
 	"github.com/labstack/echo/middleware"
 )
 
-type myContext struct {
-	echo.Context
-}
-
-func (m myContext) HelloWorld() string {
-	return "Hello World"
-}
-
-func myContextMiddleware(m myContext) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(ctx echo.Context) error {
-			m.Context = ctx
-			return next(m)
-		}
-	}
-}
-
-type repository interface {
-	All() []string
-}
-
-type dummy struct{}
-
-func (d dummy) All() []string {
-	return []string{"Go", "Echo"}
-}
-
-func repositoryMiddleware(r repository) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(ctx echo.Context) error {
-			ctx.Set("repository", r)
-			return next(ctx)
-		}
-	}
+type todo struct {
+	ID    uint64 `json:"id"`
+	Title string `json:"title"`
+	Done  bool   `json:"done"`
 }
 
 func main() {
-	m := echo.New()
-	m.Use(middleware.Logger())
-	m.Use(middleware.Recover())
-	m.Use(myContextMiddleware(myContext{}))
-	m.Use(repositoryMiddleware(dummy{}))
+	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
 
-	m.Get("/", func(ctx echo.Context) error {
+	e.GET("/", func(ctx echo.Context) error {
 		return ctx.String(200, "Hello World")
 	})
 
-	m.Get("/custom", func(ctx echo.Context) error {
-		c := ctx.(myContext)
-		return ctx.String(200, c.HelloWorld())
+	e.GET("/panic", func(ctx echo.Context) error {
+		panic("Panic")
 	})
 
-	m.Get("/json", func(ctx echo.Context) error {
-		repo := ctx.Get("repository").(repository)
-
-		return ctx.JSON(200, repo.All())
+	e.GET("/error", func(ctx echo.Context) error {
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	})
 
-	m.Run(standard.New(":9090"))
+	e.GET("/genericError", func(ctx echo.Context) error {
+		return errors.New("Some error")
+	})
+
+	e.GET("/unauthorized", func(ctx echo.Context) error {
+		return echo.ErrUnauthorized
+	})
+
+	e.GET("/todos", func(ctx echo.Context) error {
+		todos := []todo{
+			{
+				ID:    1,
+				Title: "Example",
+				Done:  false,
+			},
+		}
+		ctx.Response().Header().Set("Link", "<http://www.google.com>; rel=\"next\"")
+		return ctx.JSON(http.StatusOK, todos)
+	})
+
+	e.GET("/map", func(ctx echo.Context) error {
+		return ctx.JSON(http.StatusOK, echo.Map{
+			"Hello": "World",
+			"One":   1,
+		})
+	})
+
+	e.GET("/hello/:name", func(ctx echo.Context) error {
+		return ctx.JSON(http.StatusOK, ctx.Param("name"))
+	})
+
+	e.Start(":9000")
 }
