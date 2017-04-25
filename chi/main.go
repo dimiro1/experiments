@@ -3,6 +3,8 @@ package main
 import (
 	"net/http"
 
+	"github.com/dimiro1/experiments/chi/entities"
+	"github.com/dimiro1/experiments/chi/v1"
 	"github.com/pressly/chi"
 	"github.com/pressly/chi/middleware"
 	"github.com/pressly/chi/render"
@@ -23,12 +25,7 @@ func init() {
 	}
 }
 
-type Todo struct {
-	ID    uint64 `json:"id"`
-	Title string `json:"title"`
-	Done  bool   `json:"done"`
-}
-
+// ErrResponse our standard error response
 type ErrResponse struct {
 	Err            error `json:"-"` // low-level runtime error
 	HTTPStatusCode int   `json:"-"` // http response status code
@@ -38,23 +35,21 @@ type ErrResponse struct {
 	ErrorText  string `json:"error,omitempty"` // application-level error message, for debugging
 }
 
+// Render sets http status code on response
 func (e ErrResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	render.Status(r, e.HTTPStatusCode)
 	return nil
 }
 
+// ErrInvalidRequest creates a new Invalid request error
 func ErrInvalidRequest(err error) render.Renderer {
 	return ErrResponse{
 		Err:            err,
-		HTTPStatusCode: 400,
+		HTTPStatusCode: http.StatusBadRequest,
 		StatusText:     "Invalid request.",
 		ErrorText:      err.Error(),
 	}
 }
-
-type TodoRenderer struct{ Todo }
-
-func (t TodoRenderer) Render(w http.ResponseWriter, r *http.Request) error { return nil }
 
 func main() {
 	r := chi.NewRouter()
@@ -70,26 +65,26 @@ func main() {
 	})
 
 	r.Get("/todos", func(w http.ResponseWriter, r *http.Request) {
-		todos := []Todo{
+		todos := []entities.Todo{
 			{
 				ID:    1,
 				Title: "Example",
 				Done:  false,
 			},
 		}
-		w.Header().Set("Link", "<http://www.google.com>; rel=\"next\"")
-		render.Respond(w, r, todos)
+
+		render.Render(w, r, v1.NewTodosResponse(todos))
 	})
 
 	r.Post("/todos", func(w http.ResponseWriter, r *http.Request) {
-		var todo Todo
+		var todo entities.Todo
 
 		if err := render.Decode(r, &todo); err != nil {
 			render.Render(w, r, ErrInvalidRequest(err))
 			return
 		}
 
-		render.Render(w, r, TodoRenderer{todo})
+		render.Render(w, r, v1.NewTodoResponse(todo))
 	})
 
 	http.ListenAndServe(":7000", r)
