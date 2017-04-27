@@ -9,9 +9,9 @@ import (
 )
 
 type todo struct {
-	ID    uint64 `json:"id"`
-	Title string `json:"title"`
-	Done  bool   `json:"done"`
+	ID    uint64 `query:"id"    json:"id"`
+	Title string `query:"title" json:"title"`
+	Done  bool   `query:"done"  json:"done"`
 }
 
 func main() {
@@ -60,6 +60,16 @@ func main() {
 
 	e.GET("/hello/:name", func(ctx echo.Context) error {
 		return ctx.JSON(http.StatusOK, ctx.Param("name"))
+	})
+
+	e.GET("/query", func(ctx echo.Context) error {
+		var todo todo
+
+		if err := ctx.Bind(&todo); err != nil {
+			return err
+		}
+
+		return ctx.JSON(http.StatusOK, todo)
 	})
 
 	e.Start(":9000")
