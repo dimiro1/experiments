@@ -3,7 +3,9 @@ package main
 import (
 	"errors"
 	"net/http"
+	"strings"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 )
@@ -14,10 +16,82 @@ type todo struct {
 	Done  bool   `query:"done"  json:"done"`
 }
 
+type user struct {
+	Email         string `query:"email" json:"email" valid:"email"`
+	FavoriteColor string `query:"favoriteColor" json:"favoriteColor" valid:"hexcolor"`
+}
+
+type validationFailed struct {
+	Message string            `json:"message"`
+	Errors  []validationError `json:"errors"`
+}
+
+func (v validationFailed) Error() string {
+	var err string
+
+	for _, e := range v.Errors {
+		err += e.Error() + ";"
+	}
+	return err
+}
+
+type validationError struct {
+	Field   string `json:"field"`
+	Message string `json:"message"`
+}
+
+func (v validationError) Error() string {
+	return v.Field + ": " + v.Message
+}
+
+// Validator implements the echo.Validator interface
+type Validator struct{}
+
+// Validate validates the given struct
+func (v Validator) Validate(i interface{}) error {
+	_, err := govalidator.ValidateStruct(i)
+	if err == nil {
+		return nil
+	}
+
+	if errors, ok := err.(govalidator.Errors); ok {
+		var (
+			validationFailed = validationFailed{
+				Message: "Validation Failed",
+			}
+			other []string
+		)
+
+		for _, e := range errors {
+			if validatorErr, ok := e.(govalidator.Error); ok {
+				validationFailed.Errors = append(validationFailed.Errors, validationError{
+					Field:   validatorErr.Name,
+					Message: validatorErr.Err.Error(),
+				})
+			} else {
+				// Otherwise add the error on unkown field
+				other = append(other, e.Error())
+			}
+		}
+
+		if len(other) > 0 {
+			validationFailed.Errors = append(validationFailed.Errors, validationError{
+				Field:   "unknown",
+				Message: strings.Join(other, ";"),
+			})
+		}
+
+		return validationFailed
+	}
+
+	return err
+}
+
 func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Validator = Validator{}
 
 	e.GET("/", func(ctx echo.Context) error {
 		return ctx.String(200, "Hello World")
@@ -70,6 +144,23 @@ func main() {
 		}
 
 		return ctx.JSON(http.StatusOK, todo)
+	})
+
+	e.GET("/validator", func(ctx echo.Context) error {
+		var user user
+
+		if err := ctx.Bind(&user); err != nil {
+			return err
+		}
+		if err := ctx.Validate(user); err != nil {
+			if vf, ok := err.(validationFailed); ok {
+				return echo.NewHTTPError(http.StatusBadRequest, vf)
+			}
+
+			return err
+		}
+
+		return ctx.JSON(http.StatusOK, user)
 	})
 
 	e.Start(":9000")
