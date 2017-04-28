@@ -17,8 +17,8 @@ type todo struct {
 }
 
 type user struct {
-	Email         string `query:"email" json:"email" valid:"email"`
-	FavoriteColor string `query:"favoriteColor" json:"favoriteColor" valid:"hexcolor"`
+	Email         string `query:"email" json:"email" valid:"email~invalid,required~missing_field"`
+	FavoriteColor string `query:"favoriteColor" json:"favoriteColor" valid:"hexcolor~invalid,required~missing_field"`
 }
 
 type validationFailed struct {
@@ -36,12 +36,12 @@ func (v validationFailed) Error() string {
 }
 
 type validationError struct {
-	Field   string `json:"field"`
-	Message string `json:"message"`
+	Field  string `json:"field"`
+	Reason string `json:"reason"`
 }
 
 func (v validationError) Error() string {
-	return v.Field + ": " + v.Message
+	return v.Field + ": " + v.Reason
 }
 
 // Validator implements the echo.Validator interface
@@ -65,8 +65,8 @@ func (v Validator) Validate(i interface{}) error {
 		for _, e := range errors {
 			if validatorErr, ok := e.(govalidator.Error); ok {
 				validationFailed.Errors = append(validationFailed.Errors, validationError{
-					Field:   validatorErr.Name,
-					Message: validatorErr.Err.Error(),
+					Field:  validatorErr.Name,
+					Reason: validatorErr.Err.Error(),
 				})
 			} else {
 				// Otherwise add the error on unkown field
@@ -76,8 +76,8 @@ func (v Validator) Validate(i interface{}) error {
 
 		if len(other) > 0 {
 			validationFailed.Errors = append(validationFailed.Errors, validationError{
-				Field:   "unknown",
-				Message: strings.Join(other, ";"),
+				Field:  "unknown",
+				Reason: strings.Join(other, ";"),
 			})
 		}
 
@@ -152,6 +152,7 @@ func main() {
 		if err := ctx.Bind(&user); err != nil {
 			return err
 		}
+
 		if err := ctx.Validate(user); err != nil {
 			if vf, ok := err.(validationFailed); ok {
 				return echo.NewHTTPError(http.StatusBadRequest, vf)
