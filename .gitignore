@@ -28,4 +28,6 @@ _testmain.go
 */build/*
 .gradle
 *.class
-/jetty/.nb-gradle/
+/jetty/.nb-gradle/.idea/
+.idea/*
+*.idea/
