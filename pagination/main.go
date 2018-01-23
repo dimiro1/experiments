@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/dimiro1/experiments/pagination/paging"
+	"github.com/dimiro1/experiments/pagination/pagination"
 )
 
 // Post is our pageable object
@@ -13,15 +13,15 @@ type Post struct {
 	Body  string `json:"body"`
 }
 
-// PostsPage represents a single page, it contains Page metadata and the Post results
+// PostsPage represents a single page, it contains Metadata metadata and the Post results
 type PostsPage struct {
-	paging.Page
+	pagination.Metadata
 	Results []Post `json:"results"`
 }
 
 // AllParameters parameters for the All function
 type AllParameters struct {
-	paging.Params
+	pagination.ByPageNum
 }
 
 // PostsRepository interface that defines the PostsRepositoey
@@ -36,7 +36,7 @@ type DummyPostsRepository struct{}
 // Here we can get posts in a database, some external api etc
 func (DummyPostsRepository) All(params AllParameters) PostsPage {
 	return PostsPage{
-		Page: paging.Page{
+		Metadata: pagination.Metadata{
 			IsFirst:      true,
 			IsLast:       false,
 			Count:        10,
@@ -59,9 +59,9 @@ func (DummyPostsRepository) All(params AllParameters) PostsPage {
 
 func main() {
 	r := DummyPostsRepository{}
-	page := r.All(AllParameters{paging.Params{
-		Offset: 0,
-		Limit:  10,
+	page := r.All(AllParameters{pagination.ByPageNum{
+		Page:    1,
+		PerPage: 10,
 	}})
 	data, _ := json.MarshalIndent(page, "", "\t")
 	fmt.Println(string(data))
