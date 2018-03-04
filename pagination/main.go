@@ -1,10 +1,12 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
+	"net/http"
 
 	"github.com/dimiro1/experiments/pagination/pagination"
+	"github.com/dimiro1/experiments/pagination/sort"
+	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 // Post is our pageable object
@@ -13,36 +15,37 @@ type Post struct {
 	Body  string `json:"body"`
 }
 
-// PostsPage represents a single page, it contains Metadata metadata and the Post results
-type PostsPage struct {
+// PagedPosts represents a single page, it contains Metadata metadata and the Post results
+type PagedPosts struct {
 	pagination.Metadata
 	Results []Post `json:"results"`
 }
 
-// AllParameters parameters for the All function
-type AllParameters struct {
+// FindAllOptions parameters for the FindAll function
+type FindAllOptions struct {
+	sort.Sortable
 	pagination.ByPageNum
 }
 
-// PostsRepository interface that defines the PostsRepositoey
+// PostsRepository interface that defines the repository with posts
 type PostsRepository interface {
-	All(AllParameters) PostsPage
+	FindAll(FindAllOptions) PagedPosts
 }
 
 // DummyPostsRepository implements the PostsRepository
 type DummyPostsRepository struct{}
 
-// All this is just a super basic example
+// FindAll this is just a super basic example
 // Here we can get posts in a database, some external api etc
-func (DummyPostsRepository) All(params AllParameters) PostsPage {
-	return PostsPage{
+func (DummyPostsRepository) FindAll(options FindAllOptions) PagedPosts {
+	return PagedPosts{
 		Metadata: pagination.Metadata{
-			IsFirst:      true,
-			IsLast:       false,
-			Count:        10,
-			Current:      1,
-			PreviousLink: "", // We are ignoring empty
-			NextLink:     "http://localhost:8000/posts?page=2",
+			IsFirst:     true,
+			IsLast:      false,
+			Total:       options.PerPage,
+			Page:        options.Page,
+			HasNext:     true,
+			HasPrevious: false,
 		},
 		Results: []Post{
 			{
@@ -58,11 +61,20 @@ func (DummyPostsRepository) All(params AllParameters) PostsPage {
 }
 
 func main() {
-	r := DummyPostsRepository{}
-	page := r.All(AllParameters{pagination.ByPageNum{
-		Page:    1,
-		PerPage: 10,
-	}})
-	data, _ := json.MarshalIndent(page, "", "\t")
-	fmt.Println(string(data))
+	var posts PostsRepository = DummyPostsRepository{}
+	r := gin.Default()
+	r.GET("/", func(ctx *gin.Context) {
+		var params FindAllOptions
+		if err := ctx.BindQuery(&params); err != nil {
+			ctx.Negotiate(http.StatusBadRequest, gin.Negotiate{Data: err, Offered: []string{binding.MIMEJSON, binding.MIMEXML}})
+			return
+		}
+
+		page := posts.FindAll(params)
+
+		ctx.Header("Link", `<http://localhost:8000?page=1>; rel="next"`)
+		ctx.Negotiate(http.StatusOK, gin.Negotiate{Data: page, Offered: []string{binding.MIMEJSON, binding.MIMEXML}})
+	})
+
+	r.Run()
 }
