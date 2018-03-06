@@ -8,8 +8,8 @@ import (
 )
 
 type Default struct {
-	Params    params.Parameters
-	Binder    binder.Binder
-	Validator validator.Validator
-	Renderer  render.Renderer
+	params.Parameters
+	binder.Binder
+	validator.Validator
+	render.Renderer
 }

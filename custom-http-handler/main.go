@@ -8,6 +8,7 @@ import (
 
 	"github.com/dimiro1/experiments/custom-http-handler/handler"
 	"github.com/dimiro1/experiments/custom-http-handler/imp"
+	"github.com/dimiro1/experiments/custom-http-handler/render"
 	"github.com/go-chi/chi"
 )
 
@@ -23,6 +24,21 @@ func (h HelloWorldInput) IsValid() (bool, error) {
 	return true, nil
 }
 
+type Index struct {
+	render.Renderer
+
+	// Caching?
+	// Database?
+	// Synchronizer?
+	// Queue?
+	// Logger?
+	// Tracer?
+}
+
+func (i *Index) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	i.Render(w, r, "Hello World")
+}
+
 type HelloWorld struct {
 	handler.Default
 
@@ -32,33 +48,38 @@ type HelloWorld struct {
 
 func (h *HelloWorld) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var input HelloWorldInput
-	if err := h.Binder.Bind(r, &input); err != nil {
+	if err := h.Bind(r, &input); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		h.Renderer.Render(w, r, "Bad Request")
+		h.Render(w, r, "Bad Request")
 		return
 	}
 
-	if _, err := h.Validator.Validate(input); err != nil {
+	if _, err := h.Validate(input); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		h.Renderer.Render(w, r, err.Error())
+		h.Render(w, r, err.Error())
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	h.Renderer.Render(w, r, fmt.Sprintf("Hello %s", input.Name))
+	h.Render(w, r, fmt.Sprintf("Hello %s", input.Name))
 }
 
 func main() {
 	helloWorld := &HelloWorld{
 		Default: handler.Default{
-			Params:    imp.Parameters{},
-			Binder:    imp.ParametersBinder{},
-			Renderer:  imp.Text{},
-			Validator: imp.Validator{},
+			Parameters: imp.Parameters{},
+			Binder:     imp.ParametersBinder{},
+			Renderer:   imp.Text{},
+			Validator:  imp.Validator{},
 		},
 	}
 
+	index := &Index{
+		Renderer: imp.Text{},
+	}
+
 	r := chi.NewRouter()
-	r.Get("/{name}", helloWorld.ServeHTTP)
+	r.Get("/", index.ServeHTTP)
+	r.Get("/hello/{name}", helloWorld.ServeHTTP)
 	http.ListenAndServe(":8000", r)
 }
