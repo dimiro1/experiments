@@ -10,7 +10,16 @@ type Text struct{}
 
 func (Text) Render(w http.ResponseWriter, r *http.Request, i interface{}) error {
 	w.Header().Set("content-type", "text/plain")
-	_, err := w.Write([]byte(i.(string)))
+	var data []byte
+
+	switch i.(type) {
+	case string:
+		data = []byte(i.(string))
+	case error:
+		data = []byte(i.(error).Error())
+	}
+
+	_, err := w.Write(data)
 	return err
 }
 

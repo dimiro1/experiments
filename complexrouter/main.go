@@ -8,6 +8,39 @@ import (
 	"github.com/dimiro1/experiments/complexrouter/engine"
 )
 
+type (
+	Renderer interface {
+		JSONRenderer
+		TextRenderer
+	}
+
+	JSONRenderer interface {
+		JSON(int, interface{}) error
+	}
+
+	TextRenderer interface {
+		Text(int, string) error
+	}
+
+	Base struct {
+		// Binder
+		// Renderer
+		// Params
+		// Validator
+		Renderer Renderer
+	}
+)
+
+type Handler struct {
+	Base
+
+	// Logger
+}
+
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.Renderer.Text(http.StatusOK, "Hello World")
+}
+
 func main() {
 	r := engine.NewRouter()
 

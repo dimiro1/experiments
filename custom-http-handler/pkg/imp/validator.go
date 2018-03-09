@@ -1,6 +1,6 @@
 package imp
 
-import "github.com/dimiro1/experiments/custom-http-handler/validator"
+import "github.com/dimiro1/experiments/custom-http-handler/pkg/validator"
 
 type Validator struct{}
 

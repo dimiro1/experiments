@@ -1,14 +1,16 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
-	"errors"
+	"time"
 
-	"github.com/dimiro1/experiments/custom-http-handler/handler"
-	"github.com/dimiro1/experiments/custom-http-handler/imp"
-	"github.com/dimiro1/experiments/custom-http-handler/render"
+	"github.com/dimiro1/experiments/custom-http-handler/pkg/cache"
+	"github.com/dimiro1/experiments/custom-http-handler/pkg/handler"
+	"github.com/dimiro1/experiments/custom-http-handler/pkg/imp"
+	"github.com/dimiro1/experiments/custom-http-handler/pkg/render"
 	"github.com/go-chi/chi"
 )
 
@@ -18,7 +20,7 @@ type HelloWorldInput struct {
 
 func (h HelloWorldInput) IsValid() (bool, error) {
 	if h.Name == "" {
-		return false, errors.New("must cannot be blank")
+		return false, errors.New("cannot be blank")
 	}
 
 	return true, nil
@@ -26,8 +28,8 @@ func (h HelloWorldInput) IsValid() (bool, error) {
 
 type Index struct {
 	render.Renderer
+	cache.Cache
 
-	// Caching?
 	// Database?
 	// Synchronizer?
 	// Queue?
@@ -36,7 +38,19 @@ type Index struct {
 }
 
 func (i *Index) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	i.Render(w, r, "Hello World")
+	err := i.Cache.Set("greeting", "Hello World", 2*time.Second)
+	if err != nil {
+		i.Render(w, r, err)
+		return
+	}
+
+	cachedString, found := i.Cache.Get("greeting")
+	if !found {
+		i.Render(w, r, err)
+		return
+	}
+
+	i.Render(w, r, cachedString.(string))
 }
 
 type HelloWorld struct {
@@ -76,6 +90,7 @@ func main() {
 
 	index := &Index{
 		Renderer: imp.Text{},
+		Cache:    imp.NewCache(),
 	}
 
 	r := chi.NewRouter()
