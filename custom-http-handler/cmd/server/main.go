@@ -16,6 +16,7 @@ import (
 
 type HelloWorldInput struct {
 	Name string `schema:"name"`
+	Age  int    `schema:"age"`
 }
 
 func (h HelloWorldInput) IsValid() (bool, error) {
@@ -40,17 +41,17 @@ type Index struct {
 func (i *Index) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := i.Cache.Set("greeting", "Hello World", 2*time.Second)
 	if err != nil {
-		i.Render(w, r, err)
+		i.Render(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
 	cachedString, found := i.Cache.Get("greeting")
 	if !found {
-		i.Render(w, r, err)
+		i.Render(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
-	i.Render(w, r, cachedString.(string))
+	i.Render(w, r, http.StatusOK, cachedString.(string))
 }
 
 type HelloWorld struct {
@@ -63,28 +64,31 @@ type HelloWorld struct {
 func (h *HelloWorld) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var input HelloWorldInput
 	if err := h.Bind(r, &input); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		h.Render(w, r, "Bad Request")
+		h.Render(w, r, http.StatusBadRequest, err)
 		return
 	}
 
 	if _, err := h.Validate(input); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		h.Render(w, r, err.Error())
+		h.Render(w, r, http.StatusBadRequest, err)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	h.Render(w, r, fmt.Sprintf("Hello %s", input.Name))
+	h.Render(w, r, http.StatusOK, fmt.Sprintf("Hello %s, age %d", input.Name, input.Age))
 }
 
 func main() {
+	// These initializations must be made by function constructors
+	// This is just for demonstration purposes
 	helloWorld := &HelloWorld{
 		Default: handler.Default{
 			Parameters: imp.Parameters{},
 			Binder:     imp.ParametersBinder{},
-			Renderer:   imp.Text{},
-			Validator:  imp.Validator{},
+			Renderer: imp.ContentNegotiationRenderer{
+				JSONRenderer: imp.JSON{},
+				XMLRenderer:  imp.XML{},
+				TextRenderer: imp.Text{},
+			},
+			Validator: imp.Validator{},
 		},
 	}
 
